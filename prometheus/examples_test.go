@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"os"
 	"runtime"
 	"sort"
 	"time"
@@ -49,10 +48,10 @@ func ExampleGauge() {
 func ExampleGaugeVec() {
 	opsQueued := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "our_company",
-			Subsystem:   "blob_storage",
-			Name:        "ops_queued",
-			Help:        "Number of blob storage operations waiting to be processed, partitioned by user and type.",
+			Namespace: "our_company",
+			Subsystem: "blob_storage",
+			Name:      "ops_queued",
+			Help:      "Number of blob storage operations waiting to be processed, partitioned by user and type.",
 		},
 		[]string{
 			// Which user has requested the operation?
@@ -122,8 +121,8 @@ func ExampleCounter() {
 func ExampleCounterVec() {
 	httpReqs := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name:        "http_requests_total",
-			Help:        "How many HTTP requests processed, partitioned by status code and HTTP method.",
+			Name: "http_requests_total",
+			Help: "How many HTTP requests processed, partitioned by status code and HTTP method.",
 		},
 		[]string{"code", "method"},
 	)
@@ -624,14 +623,13 @@ func ExampleConstHistogram() {
 }
 
 func ExamplePushCollectors() {
-	hostname, _ := os.Hostname()
 	completionTime := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "db_backup_last_completion_time",
 		Help: "The timestamp of the last succesful completion of a DB backup.",
 	})
 	completionTime.Set(float64(time.Now().Unix()))
 	if err := prometheus.PushCollectors(
-		"db_backup", hostname,
+		"db_backup", prometheus.GroupByHostname(),
 		"http://pushgateway:9091",
 		completionTime,
 	); err != nil {

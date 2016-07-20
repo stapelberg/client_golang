@@ -11,18 +11,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package prometheus provides embeddable metric primitives for servers and
-// standardized exposition of telemetry through a web services interface.
+// Package prometheus provides metrics primitives to instrument code for
+// monitoring. It also offers a registry for metrics and ways to expose
+// registered metrics via an HTTP endpoint or push them to a Pushgateway.
 //
 // All exported functions and methods are safe to be used concurrently unless
 // specified otherwise.
 //
-// To expose metrics registered with the Prometheus registry, an HTTP server
-// needs to know about the Prometheus handler. The usual endpoint is "/metrics".
+// A Basic Example
 //
-//     http.Handle("/metrics", prometheus.Handler())
-//
-// As a starting point a very basic usage example:
+// As a starting point, a very basic usage example:
 //
 //    package main
 //
@@ -44,6 +42,7 @@
 //    )
 //
 //    func init() {
+//    	// Metrics have to be registered to be exposed:
 //    	prometheus.MustRegister(cpuTemp)
 //    	prometheus.MustRegister(hdFailures)
 //    }
@@ -52,6 +51,8 @@
 //    	cpuTemp.Set(65.3)
 //    	hdFailures.Inc()
 //
+//    	// The Handler function provides a default handler to expose metrics
+//    	// via an HTTP server. "/metrics" is the usual endpoint for that.
 //    	http.Handle("/metrics", prometheus.Handler())
 //    	http.ListenAndServe(":8080", nil)
 //    }
@@ -60,6 +61,8 @@
 // This is a complete program that exports two metrics, a Gauge and a Counter.
 // It also exports some stats about the HTTP usage of the /metrics
 // endpoint. (See the Handler function for more detail.)
+//
+// TODO: Rework from here on. Use titles
 //
 // Two more advanced metric types are the Summary and Histogram. A more
 // thorough description of metric types can be found in the prometheus docs:
@@ -74,8 +77,8 @@
 // Those are all the parts needed for basic usage. Detailed documentation and
 // examples are provided below.
 //
-// Everything else this package offers is essentially for "power users" only. A
-// few pointers to "power user features":
+// Everything else this package and its sub-packages offer is essentially for
+// "power users" only. A few pointers to "power user features":
 //
 // All the various ...Opts structs have a ConstLabels field for labels that
 // never change their value (which is only useful under special circumstances,
@@ -83,9 +86,6 @@
 //
 // The Untyped metric behaves like a Gauge, but signals the Prometheus server
 // not to assume anything about its type.
-//
-// Functions to fine-tune how the metric registry works: EnableCollectChecks,
-// PanicOnCollectError, Register, Unregister, SetMetricFamilyInjectionHook.
 //
 // For custom metric collection, there are two entry points: Custom Metric
 // implementations and custom Collector implementations. A Metric is the
@@ -105,7 +105,24 @@
 // collection time, MetricVec to bundle custom Metrics into a metric vector
 // Collector, SelfCollector to make a custom Metric collect itself.
 //
-// A good example for a custom Collector is the ExpVarCollector included in this
+// A good example for a custom Collector is the expvarCollector included in this
 // package, which exports variables exported via the "expvar" package as
 // Prometheus metrics.
+//
+// The functions Register, Unregister, MustRegister, RegisterOrGet, and
+// MustRegisterOrGet all act on the default registry. They wrap other calls as
+// described in their doc comment. For advanced use cases, you can work with
+// custom registries (created by NewRegistry and similar) and call the wrapped
+// functions directly.
+//
+// The functions Handler and UninstrumentedHandler create an HTTP handler to
+// serve metrics from the default registry in the default way, which covers most
+// of the use cases. With HandlerFor, you can create a custom HTTP handler for
+// custom registries.
+//
+// The functions Push and PushAdd push the metrics from the default registry via
+// HTTP to a Pushgateway. With PushFrom and PushAddFrom, you can push the
+// metrics from custom registries. However, often you just want to push a
+// handfull of Collectors only. For that case, there are the convenience
+// functions PushCollectors and PushAddCollectors.
 package prometheus

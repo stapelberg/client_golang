@@ -80,8 +80,8 @@ func (_ MemStatsCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func ExampleCollector_memstats() {
-	prometheus.MustRegister(&MemStatsCollector{})
 	// Since we are dealing with custom Collector implementations, it might
-	// be a good idea to enable the collect checks in the registry.
-	prometheus.EnableCollectChecks(true)
+	// be a good idea to try it out with a pedantic registry.
+	reg := prometheus.NewPedanticRegistry()
+	prometheus.MustRegisterWith(reg, &MemStatsCollector{})
 }
